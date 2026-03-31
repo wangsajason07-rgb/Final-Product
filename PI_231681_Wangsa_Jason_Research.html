@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Research Findings — PI Deep Dive 2026</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300;0,9..144,700;0,9..144,900;1,9..144,300&family=Instrument+Sans:wght@400;500;600&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0F2035;--navy2:#152840;--navy3:#1C3550;--navy4:#254465;
+  --stone:#EEE8DC;--stone2:#E4DCCE;--stone3:#D8CEC0;
+  --paper:#FAF7F2;--paper2:#F3EEE6;
+  --red:#C44020;--red2:#A03018;--red-l:#F7E4DC;
+  --teal:#1A5C6A;--teal2:#135060;--teal-l:#D4EEF2;
+  --gold:#B07A10;--gold-l:#FFF3CC;
+  --ink:#1A1612;--ink2:#2E2620;--ink3:#5A4E3C;--ink4:#8A7C68;
+  --bd:#C8BCAA;--bd2:#B0A08A;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:'Instrument Sans',sans-serif;background:var(--stone);color:var(--ink);font-size:15px;line-height:1.6;overflow-x:hidden;}
+
+/* IDENTICAL NAV */
+.nav{position:fixed;top:0;left:0;right:0;z-index:200;height:52px;background:var(--navy);border-bottom:2px solid var(--red);display:flex;align-items:stretch;}
+.nav-brand{display:flex;align-items:center;padding:0 1.5rem;gap:0.75rem;border-right:1px solid rgba(255,255,255,0.08);flex-shrink:0;}
+.nav-logo{width:28px;height:28px;background:var(--red);display:flex;align-items:center;justify-content:center;}
+.nav-logo span{font-family:'Fraunces',serif;font-weight:900;font-size:14px;color:#fff;}
+.nav-id{font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.3);letter-spacing:0.1em;}
+.nav-links{display:flex;align-items:stretch;flex:1;overflow-x:auto;overflow-y:hidden;scrollbar-width:none;}
+.nav-links::-webkit-scrollbar{display:none;}
+.nav-links a{display:flex;align-items:center;padding:0 1rem;font-size:11px;font-weight:500;color:rgba(255,255,255,0.45);text-decoration:none;border-right:1px solid rgba(255,255,255,0.07);transition:color 0.15s,background 0.15s;position:relative;letter-spacing:0.02em;white-space:nowrap;flex-shrink:0;}
+.nav-links a:hover{color:rgba(255,255,255,0.85);background:rgba(255,255,255,0.06);}
+.nav-links a.cur{color:#fff;background:rgba(255,255,255,0.08);}
+.nav-links a.cur::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:var(--red);}
+.nav-links a.sm{font-size:10px;color:rgba(255,255,255,0.28);padding:0 0.75rem;}
+.nav-cta{display:flex;align-items:stretch;margin-left:auto;}
+.nav-cta a{display:flex;align-items:center;padding:0 1.5rem;font-size:11px;font-weight:700;color:#fff;text-decoration:none;background:var(--red);letter-spacing:0.1em;text-transform:uppercase;transition:background 0.15s;}
+.nav-cta a:hover{background:var(--red2);}
+
+/* HERO */
+.hero{padding-top:52px;min-height:100vh;background:var(--navy);position:relative;overflow:hidden;display:flex;align-items:center;}
+.hero-bg{position:absolute;inset:0;background:radial-gradient(ellipse 60% 80% at 100% 40%,var(--navy3) 0%,transparent 55%),radial-gradient(ellipse 50% 60% at 0% 80%,rgba(26,92,106,0.5) 0%,transparent 60%),radial-gradient(ellipse 40% 50% at 30% 10%,rgba(196,64,32,0.1) 0%,transparent 55%),linear-gradient(150deg,var(--navy2) 0%,var(--navy) 70%);}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.04) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.04) 1px,transparent 1px);background-size:48px 48px;mask-image:radial-gradient(ellipse 80% 80% at 50% 50%,black 30%,transparent 100%);}
+.hero-deco{position:absolute;left:-80px;top:-40px;font-family:'Fraunces',serif;font-size:clamp(200px,24vw,360px);font-weight:900;color:rgba(255,255,255,0.025);line-height:1;pointer-events:none;letter-spacing:-0.04em;user-select:none;}
+.hero-inner{position:relative;z-index:2;max-width:1120px;margin:0 auto;padding:5rem 3rem;display:grid;grid-template-columns:360px 1fr;gap:5rem;align-items:center;width:100%;}
+/* Findings preview panel */
+.hfp{display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);}
+.hfp-item{background:rgba(255,255,255,0.03);padding:0.875rem 1.25rem;display:flex;align-items:flex-start;gap:0.875rem;transition:background 0.15s;}
+.hfp-item:hover{background:rgba(255,255,255,0.06);}
+.hfp-n{font-family:'Fraunces',serif;font-size:1.6rem;font-weight:900;color:rgba(255,255,255,0.08);line-height:1;flex-shrink:0;width:32px;}
+.hfp-tag{font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(196,64,32,0.8);margin-bottom:0.2rem;}
+.hfp-item.cnt .hfp-tag{color:rgba(176,122,16,0.8);}
+.hfp-t{font-size:12px;font-weight:600;color:rgba(255,255,255,0.65);line-height:1.35;}
+.methods-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);margin-top:1px;}
+.mb{background:rgba(255,255,255,0.03);padding:1rem;text-align:center;}
+.mb-n{font-family:'Fraunces',serif;font-size:1.75rem;font-weight:900;line-height:1;}
+.mb-l{font-family:'Fira Code',monospace;font-size:9px;color:rgba(255,255,255,0.22);letter-spacing:0.1em;margin-top:0.2rem;}
+/* Right text */
+.hero-tag{font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--red);border:1px solid rgba(196,64,32,0.5);display:inline-block;padding:4px 12px;margin-bottom:1.75rem;}
+.hero-title{font-family:'Fraunces',serif;font-size:clamp(2rem,3.5vw,3rem);font-weight:900;color:#fff;line-height:1.06;margin-bottom:1.25rem;}
+.hero-title .hi{color:var(--red);}
+.hero-lead{font-size:14px;color:rgba(255,255,255,0.4);line-height:1.75;font-weight:300;margin-bottom:2rem;}
+
+.scroll-cue{position:absolute;bottom:2.5rem;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:0.4rem;animation:bounce 2s ease-in-out infinite;z-index:2;}
+.scroll-cue-text{font-family:'Fira Code',monospace;font-size:9px;color:rgba(255,255,255,0.18);letter-spacing:0.14em;text-transform:uppercase;}
+.scroll-cue-arrow{width:18px;height:18px;border-right:1.5px solid rgba(255,255,255,0.18);border-bottom:1.5px solid rgba(255,255,255,0.18);transform:rotate(45deg);}
+@keyframes bounce{0%,100%{transform:translateX(-50%) translateY(0);}50%{transform:translateX(-50%) translateY(6px);}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(20px);}to{opacity:1;transform:translateY(0);}}
+
+/* SCROLL REVEAL */
+.reveal{opacity:0;transform:translateY(24px);transition:opacity 0.6s ease,transform 0.6s ease;}
+.reveal.visible{opacity:1;transform:translateY(0);}
+.reveal-delay-1{transition-delay:0.1s;}.reveal-delay-2{transition-delay:0.2s;}.reveal-delay-3{transition-delay:0.3s;}
+
+/* SECTIONS */
+.section-navy{background:var(--navy);padding:5rem 0;}
+.section-stone{background:var(--stone2);padding:5rem 0;border-top:1px solid var(--stone3);}
+.section-paper{background:var(--paper);padding:5rem 0;border-top:1px solid var(--bd);}
+.section-teal{background:var(--teal);padding:5rem 0;}
+.wrap{max-width:1060px;margin:0 auto;padding:0 2.5rem;}
+.sec-eyebrow{font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.16em;text-transform:uppercase;color:var(--red);margin-bottom:0.5rem;}
+.sec-title{font-family:'Fraunces',serif;font-size:clamp(1.8rem,3vw,2.6rem);font-weight:700;line-height:1.1;margin-bottom:1rem;}
+.sec-title-dark{color:#fff;}
+.sec-title-light{color:var(--ink);}
+.sec-lead{font-size:14.5px;line-height:1.8;font-weight:300;max-width:640px;}
+.sec-lead-dark{color:rgba(255,255,255,0.45);}
+.sec-lead-light{color:var(--ink3);}
+
+/* KEY STAT BAR across top of page */
+.key-stat-bar{background:var(--red);padding:1rem 2.5rem;display:flex;align-items:center;gap:3rem;overflow-x:auto;}
+.ksb-item{display:flex;align-items:center;gap:1rem;flex-shrink:0;}
+.ksb-n{font-family:'Fraunces',serif;font-size:1.8rem;font-weight:900;color:#fff;line-height:1;}
+.ksb-l{font-size:12px;color:rgba(255,255,255,0.75);line-height:1.35;}
+.ksb-divider{width:1px;height:40px;background:rgba(255,255,255,0.2);flex-shrink:0;}
+
+/* FINDINGS — alternating layout for visual variety */
+.findings-flow{margin-top:2.5rem;display:flex;flex-direction:column;gap:1px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);}
+.finding-row{display:grid;grid-template-columns:80px 1fr 240px;background:rgba(255,255,255,0.04);transition:background 0.2s;}
+.finding-row:hover{background:rgba(255,255,255,0.07);}
+.finding-row.counter{background:rgba(176,122,16,0.08);border-left:3px solid rgba(176,122,16,0.4);}
+.fr-num-col{display:flex;align-items:center;justify-content:center;padding:2rem 1.5rem;border-right:1px solid rgba(255,255,255,0.07);}
+.fr-num{font-family:'Fraunces',serif;font-size:3.5rem;font-weight:900;color:rgba(255,255,255,0.08);line-height:1;}
+.fr-body{padding:1.75rem 2rem;border-right:1px solid rgba(255,255,255,0.07);}
+.fr-tag{font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(196,64,32,0.8);margin-bottom:0.5rem;}
+.finding-row.counter .fr-tag{color:rgba(176,122,16,0.8);}
+.fr-title{font-size:14.5px;font-weight:600;color:rgba(255,255,255,0.9);margin-bottom:0.55rem;line-height:1.35;}
+.fr-text{font-size:13px;color:rgba(255,255,255,0.42);line-height:1.7;}
+.fr-cite{margin-top:0.875rem;font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.18);}
+.fr-meta{padding:1.75rem 1.5rem;display:flex;flex-direction:column;justify-content:center;gap:0.875rem;}
+.fr-type-label{font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:4px 10px;display:inline-block;align-self:flex-start;}
+.ft-primary{background:rgba(196,64,32,0.2);color:#E8785A;border:1px solid rgba(196,64,32,0.3);}
+.ft-secondary{background:rgba(26,92,106,0.2);color:#6ABCCB;border:1px solid rgba(26,92,106,0.3);}
+.ft-confirmed{background:rgba(82,204,138,0.15);color:#52CC8A;border:1px solid rgba(82,204,138,0.3);}
+.ft-counter{background:rgba(176,122,16,0.15);color:#F0C050;border:1px solid rgba(176,122,16,0.3);}
+.fr-sources-count{font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:rgba(255,255,255,0.12);line-height:1;}
+.fr-sources-label{font-size:11px;color:rgba(255,255,255,0.25);}
+
+/* COMPARATIVE — big country cards with visual scoring */
+.comp-intro{margin-top:2.5rem;padding:2rem;background:var(--paper);border:1px solid var(--bd);border-left:4px solid var(--teal);}
+.comp-intro-text{font-size:14px;color:var(--ink);line-height:1.75;}
+.country-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem;}
+.cc{overflow:hidden;background:var(--paper);border:1px solid var(--bd);transition:transform 0.2s,box-shadow 0.2s;}
+.cc:hover{transform:translateY(-4px);box-shadow:0 12px 32px rgba(15,32,53,0.1);}
+.cc-hd{padding:1.75rem;display:flex;flex-direction:column;}
+.cc.nl .cc-hd{background:linear-gradient(135deg,#F5E0D8 0%,#FAF7F2 100%);border-bottom:3px solid var(--red);}
+.cc.de .cc-hd{background:linear-gradient(135deg,#D8EDE2 0%,#FAF7F2 100%);border-bottom:3px solid var(--teal);}
+.cc.se .cc-hd{background:linear-gradient(135deg,#FFF3CC 0%,#FAF7F2 100%);border-bottom:3px solid var(--gold);}
+.cc-flag-row{display:flex;align-items:center;gap:0.75rem;margin-bottom:0.75rem;}
+.cc-flag{font-size:1.75rem;}
+.cc-name{font-family:'Fraunces',serif;font-size:1.15rem;font-weight:700;color:var(--ink);}
+.cc-score-big{font-family:'Fraunces',serif;font-size:3.5rem;font-weight:900;line-height:1;margin-bottom:0.25rem;}
+.cc.nl .cc-score-big{color:var(--red);}
+.cc.de .cc-score-big{color:var(--teal);}
+.cc.se .cc-score-big{color:var(--gold);}
+.cc-verdict-tag{font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.1em;text-transform:uppercase;padding:3px 10px;display:inline-block;font-weight:700;}
+.cc.nl .cc-verdict-tag{background:var(--red-l);color:var(--red);}
+.cc.de .cc-verdict-tag{background:var(--teal-l);color:var(--teal);}
+.cc.se .cc-verdict-tag{background:var(--gold-l);color:var(--gold);}
+.cc-body{padding:1.5rem 1.75rem;}
+.dim{margin-bottom:0.875rem;}
+.dim-row{display:flex;align-items:center;gap:0.6rem;margin-bottom:0.25rem;}
+.dim-l{font-size:12px;font-weight:500;color:var(--ink);flex:1;}
+.dots{display:flex;gap:3px;}
+.dot{width:10px;height:10px;border-radius:50%;border:1.5px solid var(--bd);}
+.dot.nl{background:var(--red);border-color:var(--red);}
+.dot.de{background:var(--teal);border-color:var(--teal);}
+.dot.se{background:var(--gold);border-color:var(--gold);}
+.dim-ev{font-size:11.5px;color:var(--ink4);line-height:1.5;}
+
+/* READINESS TABLE — same as page 1 */
+.ri-container{margin-top:2.5rem;}
+.ri-row{display:grid;grid-template-columns:220px 1fr 1fr 1fr;gap:1px;background:var(--bd);border:1px solid var(--bd);}
+.ri-row.header{background:var(--navy);}
+.ri-cell{background:var(--paper);padding:0.875rem 1.25rem;}
+.ri-row.header .ri-cell{background:var(--navy);color:rgba(255,255,255,0.6);font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.08em;text-transform:uppercase;}
+.ri-row.header .ri-cell.country{text-align:center;}
+.ri-row:nth-child(even) .ri-cell{background:var(--paper2);}
+.ri-row.total .ri-cell{background:var(--navy);font-weight:700;font-size:14px;}
+.ri-dim{font-size:13px;color:var(--ink);font-weight:500;}
+.ri-sub{font-size:11px;color:var(--ink4);margin-top:0.15rem;}
+.ri-score-wrap{display:flex;flex-direction:column;align-items:center;gap:0.5rem;}
+.ri-bar-track{width:100%;height:6px;background:var(--stone3);border-radius:3px;overflow:hidden;}
+.ri-bar-fill{height:6px;border-radius:3px;transition:width 1s ease;}
+.bar-0{background:var(--red);width:0%;}
+.bar-1{background:var(--gold);width:50%;}
+.bar-2{background:var(--teal);width:100%;}
+.ri-score-label{font-family:'Fira Code',monospace;font-size:11px;font-weight:500;}
+.score-0{color:var(--red);}.score-1{color:var(--gold);}.score-2{color:var(--teal);}
+.ri-total-nl{color:#E86A50;font-size:1.5rem;font-family:'Fraunces',serif;font-weight:900;}
+.ri-total-de{color:#52CC8A;font-size:1.5rem;font-family:'Fraunces',serif;font-weight:900;}
+.ri-total-se{color:#F0C050;font-size:1.5rem;font-family:'Fraunces',serif;font-weight:900;}
+.traj{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:1.5rem;}
+.tj{padding:1.5rem;border:1px solid var(--bd);background:var(--paper);text-align:center;position:relative;overflow:hidden;}
+.tj::after{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.tj.t0::after{background:var(--red);}.tj.t1::after{background:var(--gold);}.tj.t2::after{background:var(--teal);}
+.tj-ph{font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;margin-bottom:0.4rem;}
+.tj.t0 .tj-ph{color:var(--red);}.tj.t1 .tj-ph{color:var(--gold);}.tj.t2 .tj-ph{color:var(--teal);}
+.tj-sc{font-family:'Fraunces',serif;font-size:3rem;font-weight:900;line-height:1;}
+.tj.t0 .tj-sc{color:var(--red);}.tj.t1 .tj-sc{color:var(--gold);}.tj.t2 .tj-sc{color:var(--teal);}
+.tj-l{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;margin-top:0.3rem;}
+.tj.t0 .tj-l{color:var(--red);}.tj.t1 .tj-l{color:var(--gold);}.tj.t2 .tj-l{color:var(--teal);}
+
+/* DOC ANALYSIS */
+.code-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);margin-top:2.5rem;}
+.ccd{background:rgba(255,255,255,0.04);padding:1.375rem;position:relative;overflow:hidden;}
+.ccd::after{content:attr(data-code);position:absolute;right:-5px;bottom:-10px;font-family:'Fraunces',serif;font-size:4rem;font-weight:900;opacity:0.06;line-height:1;}
+.ccd-l{font-family:'Fraunces',serif;font-size:2.2rem;font-weight:900;line-height:1;margin-bottom:0.35rem;}
+.ccd-n{font-size:12px;font-weight:600;color:rgba(255,255,255,0.4);margin-bottom:0.3rem;}
+.ccd-c{font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.18);margin-bottom:0.5rem;}
+.ccd-bar{height:3px;background:rgba(255,255,255,0.08);border-radius:2px;overflow:hidden;margin-bottom:0.5rem;}
+.ccd-fill{height:3px;border-radius:2px;}
+.ccd-desc{font-size:11.5px;color:rgba(255,255,255,0.28);line-height:1.5;}
+.r1 .ccd-l{color:#6BAEDD;}.r1 .ccd-fill{background:#6BAEDD;width:55%;}
+.r2 .ccd-l{color:#F0C050;}.r2 .ccd-fill{background:#F0C050;width:35%;}
+.r3 .ccd-l{color:#E08060;}.r3 .ccd-fill{background:#E08060;width:30%;}
+.r4 .ccd-l{color:#60C080;}.r4 .ccd-fill{background:#60C080;width:20%;}
+.tt .ccd-l{color:rgba(255,255,255,0.3);}.tt .ccd-fill{background:rgba(255,255,255,0.3);width:30%;}
+.ss .ccd-l{color:#A090D0;}.ss .ccd-fill{background:#A090D0;width:25%;}
+.ee .ccd-l{color:rgba(255,255,255,0.2);}.ee .ccd-fill{background:rgba(255,255,255,0.2);width:10%;}
+.cc2 .ccd-l{color:rgba(255,255,255,0.12);}.cc2 .ccd-fill{background:transparent;width:0;}
+/* Source grid — compact cards */
+.src-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.08);margin-top:1.5rem;}
+.src{background:rgba(255,255,255,0.03);padding:0.875rem 1rem;}
+.src-n{font-family:'Fira Code',monospace;font-size:10px;color:var(--red);margin-bottom:0.2rem;}
+.src-nm{font-size:12px;color:rgba(255,255,255,0.35);line-height:1.4;margin-bottom:0.3rem;}
+.src-tags{display:flex;gap:3px;flex-wrap:wrap;}
+.stag{font-family:'Fira Code',monospace;font-size:9px;padding:2px 5px;font-weight:500;}
+.cr1{background:rgba(107,174,221,0.15);color:#6BAEDD;}
+.cr2{background:rgba(240,192,80,0.15);color:#C09010;}
+.cr3{background:rgba(224,128,96,0.15);color:#C05030;}
+.cr4{background:rgba(96,192,128,0.15);color:#2A9050;}
+.ct{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.35);}
+.cs{background:rgba(160,144,208,0.15);color:#9070C0;}
+.ce{background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.3);}
+.da-note{font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.18);margin-top:0.6rem;}
+
+/* SURVEY CTA */
+.survey-sec{background:var(--teal);padding:5rem 0;position:relative;overflow:hidden;}
+.survey-sec::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.05) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.05) 1px,transparent 1px);background-size:48px 48px;}
+.survey-inner{position:relative;z-index:1;max-width:1060px;margin:0 auto;padding:0 2.5rem;display:flex;align-items:center;justify-content:space-between;gap:3rem;}
+.survey-h{font-family:'Fraunces',serif;font-size:2.4rem;font-weight:700;color:#fff;margin-bottom:0.75rem;line-height:1.1;}
+.survey-p{font-size:14px;color:rgba(255,255,255,0.65);max-width:460px;line-height:1.75;}
+.survey-btn{display:inline-flex;align-items:center;gap:0.75rem;padding:1.1rem 2.5rem;background:#fff;color:var(--teal);font-size:13px;font-weight:700;text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;white-space:nowrap;transition:transform 0.2s,box-shadow 0.2s;box-shadow:0 4px 20px rgba(0,0,0,0.15);}
+.survey-btn:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(0,0,0,0.2);}
+
+/* BACK STRIP */
+.back-strip{background:var(--navy2);padding:1.75rem 2.5rem;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.07);}
+.back-btn{display:inline-flex;align-items:center;gap:0.6rem;color:rgba(255,255,255,0.4);font-size:12px;font-weight:600;text-decoration:none;letter-spacing:0.04em;text-transform:uppercase;transition:color 0.15s;}
+.back-btn:hover{color:rgba(255,255,255,0.75);}
+.foot{background:var(--navy);padding:1.25rem 2.5rem;display:flex;align-items:center;justify-content:space-between;border-top:1px solid rgba(255,255,255,0.07);}
+.foot-l{font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.18);}
+.foot-r{font-size:12px;color:rgba(255,255,255,0.22);}
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <div class="nav-brand">
+    <div class="nav-logo"><span>PI</span></div>
+    <div class="nav-id">PI-NL-2026-AV-REG</div>
+  </div>
+  <div class="nav-links">
+    <a href="PI_231681_Wangsa_Jason_Website.html">Project Worksheet</a>
+    <a href="PI_231681_Wangsa_Jason_Research.html" class="cur">Research Findings</a>
+    <a href="#findings" class="sm">Findings</a>
+    <a href="#comparative" class="sm">Comparative</a>
+    <a href="#index" class="sm">Index</a>
+    <a href="#docanalysis" class="sm">Doc Analysis</a>
+  </div>
+  <div class="nav-cta">
+    <a href="PI_231681_Wangsa_Jason_Simulation.html" style="background:var(--teal);border-left:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:0.5rem;padding:0 1.1rem;font-size:10px;font-weight:700;color:#fff;text-decoration:none;letter-spacing:0.07em;text-transform:uppercase;transition:background 0.15s;" onmouseover="this.style.background='var(--teal2)'" onmouseout="this.style.background='var(--teal)'">▶ Simulation</a>
+    <a href="https://www.linkedin.com/in/jasonwangsa" target="_blank" style="background:var(--navy3);border-left:1px solid rgba(255,255,255,0.08);display:flex;align-items:center;gap:0.5rem;padding:0 1.1rem;font-size:10px;font-weight:600;color:rgba(255,255,255,0.5);text-decoration:none;letter-spacing:0.06em;text-transform:uppercase;transition:color 0.15s,background 0.15s;" onmouseover="this.style.color='#fff';this.style.background='rgba(255,255,255,0.08)'" onmouseout="this.style.color='rgba(255,255,255,0.5)';this.style.background='var(--navy3)'">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+      LinkedIn
+    </a>
+  </div>
+
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-bg"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-deco">DATA</div>
+  <div class="hero-inner">
+    <div style="animation:fadeUp 0.7s 0.4s ease both;">
+      <div class="hfp">
+        <div class="hfp-item"><div class="hfp-n">F1</div><div><div class="hfp-tag">Primary Barrier · R1 · 55%</div><div class="hfp-t">RDW case-by-case process is the bottleneck</div></div></div>
+        <div class="hfp-item"><div class="hfp-n">F2</div><div><div class="hfp-tag">Vienna Convention · R2 · 35%</div><div class="hfp-t">Article 8 gap unresolved in Dutch national law</div></div></div>
+        <div class="hfp-item"><div class="hfp-n">F3</div><div><div class="hfp-tag">Circular Barrier · R3/R4</div><div class="hfp-t">Liability-insurance loop reinforces blockage</div></div></div>
+        <div class="hfp-item"><div class="hfp-n">F4</div><div><div class="hfp-tag">Technology Ready · T</div><div class="hfp-t">Technology is NOT the constraint</div></div></div>
+        <div class="hfp-item cnt"><div class="hfp-n">F5</div><div><div class="hfp-tag">Counter-Evidence</div><div class="hfp-t">Stakeholders support coordinated regulation</div></div></div>
+      </div>
+      <div class="methods-row">
+        <div class="mb"><div class="mb-n" style="color:#E86A50;">20</div><div class="mb-l">Sources coded</div></div>
+        <div class="mb"><div class="mb-n" style="color:#6BAEDD;">3</div><div class="mb-l">Countries compared</div></div>
+        <div class="mb"><div class="mb-n" style="color:#E86A50;">0/10</div><div class="mb-l">NL readiness score</div></div>
+      </div>
+    </div>
+    <div style="animation:fadeUp 0.7s 0.2s ease both;">
+      <div class="hero-tag">Research Findings · Deep Dive 2026</div>
+      <h1 class="hero-title">Why the Netherlands Can't Deploy <span class="hi">PI Hubs</span> in 12 Months</h1>
+      <p class="hero-lead">Document analysis (20 sources), comparative case analysis (NL vs Germany vs Sweden), and a Regulatory Readiness Index all converge on the same answer: the barrier is regulatory, not technical or economic.</p>
+    </div>
+  </div>
+  <div class="scroll-cue"><div class="scroll-cue-text">Scroll to read</div><div class="scroll-cue-arrow"></div></div>
+</section>
+
+<!-- KEY STAT BAR -->
+<div class="key-stat-bar">
+  <div class="ksb-item"><div class="ksb-n">55%</div><div class="ksb-l">of sources code<br>R1 as barrier</div></div>
+  <div class="ksb-divider"></div>
+  <div class="ksb-item"><div class="ksb-n">18mo+</div><div class="ksb-l">Tesla FSD pending<br>at RDW right now</div></div>
+  <div class="ksb-divider"></div>
+  <div class="ksb-item"><div class="ksb-n">0/10</div><div class="ksb-l">NL on every<br>readiness dimension</div></div>
+  <div class="ksb-divider"></div>
+  <div class="ksb-item"><div class="ksb-n">8/10</div><div class="ksb-l">Germany — same technology,<br>different policy</div></div>
+  <div class="ksb-divider"></div>
+  <div class="ksb-item"><div class="ksb-n">2026</div><div class="ksb-l">EU hub-to-hub L4<br>freight approval target</div></div>
+</div>
+
+<!-- FINDINGS -->
+<section class="section-navy" id="findings">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-eyebrow">01 — Key Research Findings</div>
+      <h2 class="sec-title sec-title-dark">Five findings. One clear answer.</h2>
+      <p class="sec-lead sec-lead-dark">Document analysis, comparative case, and readiness index all converge: the barrier is regulatory, not technical or economic.</p>
+    </div>
+    <div class="findings-flow reveal">
+      <div class="finding-row">
+        <div class="fr-num-col"><div class="fr-num">F1</div></div>
+        <div class="fr-body">
+          <div class="fr-tag">Primary Barrier · R1 · 55% of sources</div>
+          <h4 class="fr-title">The RDW case-by-case approval process is the operational bottleneck</h4>
+          <p class="fr-text">Coded R1 in 11 of 20 sources. Tesla FSD approval: 18+ months still pending March 2026. Single-operator exemptions take 6–12 months (TNO, 2025). A PI hub requiring multi-operator coordination would multiply this timeline significantly under current rules. No standardised multi-operator pathway exists.</p>
+          <div class="fr-cite">RDW (2025) · TNO (2025) · Electrek (2026) · Galassi et al. (2023)</div>
+        </div>
+        <div class="fr-meta">
+          <span class="fr-type-label ft-primary">Primary barrier</span>
+          <div><div class="fr-sources-count">11</div><div class="fr-sources-label">of 20 sources</div></div>
+        </div>
+      </div>
+      <div class="finding-row">
+        <div class="fr-num-col"><div class="fr-num">F2</div></div>
+        <div class="fr-body">
+          <div class="fr-tag">Vienna Convention · R2 · 35% of sources</div>
+          <h4 class="fr-title">Article 8 gap unresolved in Dutch national law</h4>
+          <p class="fr-text">Vellinga (2019): an AV has no 'driver' under Art. 1(v) of the Vienna Convention — making L4 operation non-compliant with Dutch road traffic law as written. Germany resolved this via the Technical Supervisor role in the 2021 Act. The Netherlands has not acted. RDW explicitly prohibits remote operation without a safety driver on site.</p>
+          <div class="fr-cite">Vellinga (2019) · WEF (2019) · German AV Act (2021) · RDW (2025)</div>
+        </div>
+        <div class="fr-meta">
+          <span class="fr-type-label ft-primary">Primary barrier</span>
+          <div><div class="fr-sources-count">7</div><div class="fr-sources-label">of 20 sources</div></div>
+        </div>
+      </div>
+      <div class="finding-row">
+        <div class="fr-num-col"><div class="fr-num">F3</div></div>
+        <div class="fr-body">
+          <div class="fr-tag">Circular Barrier · R3/R4 · 8 sources combined</div>
+          <h4 class="fr-title">Liability-insurance loop reinforces the deployment blockage</h4>
+          <p class="fr-text">No L4 liability rule in Dutch law → insurers cannot price policies → operators cannot deploy without coverage → no actuarial data → loop continues. Resolving the RDW approval pathway (F1) would break this loop by generating deployment data. Secondary to R1 but reinforcing the overall barrier structure.</p>
+          <div class="fr-cite">Tjong Tjin Tai (2024) · Munich Re (n.d.) · Tjong Tjin Tai (2018)</div>
+        </div>
+        <div class="fr-meta">
+          <span class="fr-type-label ft-secondary">Secondary barrier</span>
+          <div><div class="fr-sources-count">8</div><div class="fr-sources-label">combined (R3+R4)</div></div>
+        </div>
+      </div>
+      <div class="finding-row">
+        <div class="fr-num-col"><div class="fr-num">F4</div></div>
+        <div class="fr-body">
+          <div class="fr-tag">Technology Confirmed Ready · T · 6 sources</div>
+          <h4 class="fr-title">Technology is NOT the constraint — it is commercially deployed</h4>
+          <p class="fr-text">Einride's L4 freight trucks commercially deployed on fixed EU routes, independently audited by RISE (2024). Milakis et al. (2017): NL deployment divergence driven entirely by regulatory approach, not technical capability. TNO confirms technology ready in controlled port zones (APM Maasvlakte trials active).</p>
+          <div class="fr-cite">Einride/RISE (2024) · Milakis et al. (2017) · TNO (2025) · WEF (2025)</div>
+        </div>
+        <div class="fr-meta">
+          <span class="fr-type-label ft-confirmed">Confirmed finding</span>
+          <div><div class="fr-sources-count">6</div><div class="fr-sources-label">of 20 sources</div></div>
+        </div>
+      </div>
+      <div class="finding-row counter">
+        <div class="fr-num-col"><div class="fr-num">F5</div></div>
+        <div class="fr-body">
+          <div class="fr-tag">Counter-Evidence — Refines Hypothesis</div>
+          <h4 class="fr-title">Stakeholders support regulation — if nationally coordinated</h4>
+          <p class="fr-text">Van Duin et al. (2023) found stakeholders positive toward regulation if nationally coordinated. This refines — not disproves — the hypothesis. The problem is regulatory fragmentation, not regulation itself. Germany and Sweden both regulate predictably. NL regulates case-by-case and unpredictably. Source coded as-written, not excluded.</p>
+          <div class="fr-cite">Van Duin et al. (2023) — counter-evidence, included deliberately, coded as-written</div>
+        </div>
+        <div class="fr-meta">
+          <span class="fr-type-label ft-counter">Counter-evidence</span>
+          <div><div class="fr-sources-count">1</div><div class="fr-sources-label">source — refines hypothesis</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARATIVE CASE -->
+<section class="section-paper" id="comparative">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-eyebrow">02 — Comparative Case Analysis</div>
+      <h2 class="sec-title sec-title-light">Netherlands vs Germany vs Sweden</h2>
+      <p class="sec-lead sec-lead-light">All three countries share comparable AV technology and EU regulatory context. Deployment differences are explained entirely by national regulatory choices.</p>
+    </div>
+    <div class="comp-intro reveal">
+      <p class="comp-intro-text">Because technology is held constant across all three cases, any difference in deployment outcomes must be attributed to national regulatory differences. This design directly tests whether Dutch regulatory barriers are the key variable blocking deployment — and the evidence confirms they are.</p>
+    </div>
+    <div class="country-grid">
+      <div class="cc nl reveal reveal-delay-1">
+        <div class="cc-hd">
+          <div class="cc-flag-row"><div class="cc-flag">🇳🇱</div><div class="cc-name">Netherlands</div></div>
+          <div class="cc-score-big">0/10</div>
+          <span class="cc-verdict-tag">Not Deployment-Ready</span>
+        </div>
+        <div class="cc-body">
+          <div class="dim"><div class="dim-row"><div class="dim-l">L4 Legal Basis</div><div class="dots"><div class="dot"></div><div class="dot"></div></div></div><div class="dim-ev">No dedicated L4 law. Article 39 EU exemptions applied case-by-case.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Approval Process</div><div class="dots"><div class="dot"></div><div class="dot"></div></div></div><div class="dim-ev">Case-by-case, no fixed timeline. 18+ months per operator documented.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Vienna Convention</div><div class="dots"><div class="dot"></div><div class="dot"></div></div></div><div class="dim-ev">Unresolved. Remote operation without safety driver not allowed.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Liability Framework</div><div class="dots"><div class="dot"></div><div class="dot"></div></div></div><div class="dim-ev">Manufacturer vs. operator unresolved. WAM assigns to vehicle keeper.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Hub-to-Hub Freight</div><div class="dots"><div class="dot"></div><div class="dot"></div></div></div><div class="dim-ev">Not legally possible at L4 without individual exemption per operator.</div></div>
+        </div>
+      </div>
+      <div class="cc de reveal reveal-delay-2">
+        <div class="cc-hd">
+          <div class="cc-flag-row"><div class="cc-flag">🇩🇪</div><div class="cc-name">Germany</div></div>
+          <div class="cc-score-big">8/10</div>
+          <span class="cc-verdict-tag">Deployment-Ready</span>
+        </div>
+        <div class="cc-body">
+          <div class="dim"><div class="dim-row"><div class="dim-l">L4 Legal Basis</div><div class="dots"><div class="dot de"></div><div class="dot de"></div></div></div><div class="dim-ev">Autonomous Driving Act (2021) + AFGBV (2022) — first in world.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Approval Process</div><div class="dots"><div class="dot de"></div><div class="dot"></div></div></div><div class="dim-ev">Defined operational area approval by state authority. Transparent process.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Vienna Convention</div><div class="dots"><div class="dot de"></div><div class="dot de"></div></div></div><div class="dim-ev">Technical Supervisor role created — fully resolves Art. 8 gap.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Liability Framework</div><div class="dots"><div class="dot de"></div><div class="dot"></div></div></div><div class="dim-ev">Strict liability doubled to €10M. Insurance market active.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Hub-to-Hub Freight</div><div class="dots"><div class="dot de"></div><div class="dot de"></div></div></div><div class="dim-ev">Legally possible. A9 corridor L4 truck trials active (MAN, TRATON).</div></div>
+        </div>
+      </div>
+      <div class="cc se reveal reveal-delay-3">
+        <div class="cc-hd">
+          <div class="cc-flag-row"><div class="cc-flag">🇸🇪</div><div class="cc-name">Sweden</div></div>
+          <div class="cc-score-big">6/10</div>
+          <span class="cc-verdict-tag">Conditionally Ready</span>
+        </div>
+        <div class="cc-body">
+          <div class="dim"><div class="dim-row"><div class="dim-l">L4 Legal Basis</div><div class="dots"><div class="dot se"></div><div class="dot"></div></div></div><div class="dim-ev">Trial permit framework (TSFS 2021:4) enables limited commercial L4.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Approval Process</div><div class="dots"><div class="dot se"></div><div class="dot"></div></div></div><div class="dim-ev">Self-assessment safety case; 3–6 month average. Predictable, applicant-led.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Vienna Convention</div><div class="dots"><div class="dot se"></div><div class="dot"></div></div></div><div class="dim-ev">Practical workaround — driver inside or outside vehicle.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Liability Framework</div><div class="dots"><div class="dot se"></div><div class="dot"></div></div></div><div class="dim-ev">Applicant self-assessment assigns responsibility. Insurance market engaged.</div></div>
+          <div class="dim"><div class="dim-row"><div class="dim-l">Hub-to-Hub Freight</div><div class="dots"><div class="dot se"></div><div class="dot se"></div></div></div><div class="dim-ev">Einride commercial L4 trucks deployed on fixed EU freight routes.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- READINESS INDEX -->
+<section class="section-stone" id="index">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-eyebrow">03 — Regulatory Readiness Index</div>
+      <h2 class="sec-title sec-title-light">The gap, scored dimension by dimension</h2>
+      <p class="sec-lead sec-lead-light">0 = blocking gap, 1 = partial workaround, 2 = fully resolved. NL scores 0 on every single dimension — the only country in this analysis where no regulatory prerequisite is in place.</p>
+    </div>
+    <div class="ri-container reveal">
+      <div class="ri-row header">
+        <div class="ri-cell">Dimension</div>
+        <div class="ri-cell country">Netherlands</div>
+        <div class="ri-cell country">Germany</div>
+        <div class="ri-cell country">Sweden</div>
+      </div>
+      <div class="ri-row">
+        <div class="ri-cell"><div class="ri-dim">D1 — Legal basis for L4</div><div class="ri-sub">Dedicated national law for port/industrial zones</div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-0"></div></div><span class="ri-score-label score-0">0 — Absent</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-2"></div></div><span class="ri-score-label score-2">2 — Met</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+      </div>
+      <div class="ri-row">
+        <div class="ri-cell"><div class="ri-dim">D2 — Approval process clarity</div><div class="ri-sub">Standardised pathway with defined max timeline</div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-0"></div></div><span class="ri-score-label score-0">0 — Absent</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+      </div>
+      <div class="ri-row">
+        <div class="ri-cell"><div class="ri-dim">D3 — Vienna Convention workaround</div><div class="ri-sub">National legislative override of Art. 8 requirement</div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-0"></div></div><span class="ri-score-label score-0">0 — Absent</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-2"></div></div><span class="ri-score-label score-2">2 — Met</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+      </div>
+      <div class="ri-row">
+        <div class="ri-cell"><div class="ri-dim">D4 — Liability framework clarity</div><div class="ri-sub">Clear liability assignment for L4 system failures</div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-0"></div></div><span class="ri-score-label score-0">0 — Absent</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-1"></div></div><span class="ri-score-label score-1">1 — Partial</span></div></div>
+      </div>
+      <div class="ri-row">
+        <div class="ri-cell"><div class="ri-dim">D5 — Hub-to-hub deployment feasibility</div><div class="ri-sub">Multi-operator L4 AV freight commercially viable</div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-0"></div></div><span class="ri-score-label score-0">0 — Absent</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-2"></div></div><span class="ri-score-label score-2">2 — Met</span></div></div>
+        <div class="ri-cell"><div class="ri-score-wrap"><div class="ri-bar-track"><div class="ri-bar-fill bar-2"></div></div><span class="ri-score-label score-2">2 — Met</span></div></div>
+      </div>
+      <div class="ri-row total">
+        <div class="ri-cell" style="color:#fff;">TOTAL (max 10)</div>
+        <div class="ri-cell" style="text-align:center;"><span class="ri-total-nl">0/10</span></div>
+        <div class="ri-cell" style="text-align:center;"><span class="ri-total-de">8/10</span></div>
+        <div class="ri-cell" style="text-align:center;"><span class="ri-total-se">6/10</span></div>
+      </div>
+    </div>
+    <div style="margin-top:1.5rem;font-size:13px;font-weight:600;color:var(--ink2);margin-bottom:0.75rem;">NL Trajectory — If Project PI-NL-2026-AV-REG is Approved</div>
+    <div class="traj reveal">
+      <div class="tj t0"><div class="tj-ph">Today — 0 months</div><div class="tj-sc">0/10</div><div class="tj-l">Not Ready</div></div>
+      <div class="tj t1"><div class="tj-ph">After Phase 1 — 12 months</div><div class="tj-sc">2/10</div><div class="tj-l">Sandbox Deployed</div></div>
+      <div class="tj t2"><div class="tj-ph">After Phase 2 — 24 months</div><div class="tj-sc">9/10</div><div class="tj-l">Deployment Ready</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DOC ANALYSIS -->
+<section class="section-navy" id="docanalysis">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-eyebrow">04 — Document Analysis</div>
+      <h2 class="sec-title sec-title-dark">20 sources · 8 barrier codes · R1 dominates</h2>
+      <p class="sec-lead sec-lead-dark">Each source coded against regulatory (R1–R4), technical (T), economic (E), cultural (C), and standardisation (S) barriers. R1 appears in 55% of all sources — confirming the hypothesis.</p>
+    </div>
+    <div class="code-grid reveal">
+      <div class="ccd r1" data-code="R1"><div class="ccd-l">R1</div><div class="ccd-n">RDW Approval Process</div><div class="ccd-c">11/20 sources · 55%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Case-by-case exemption, no fixed timeline, no multi-operator pathway</div></div>
+      <div class="ccd r2" data-code="R2"><div class="ccd-l">R2</div><div class="ccd-n">Vienna Convention Gap</div><div class="ccd-c">7/20 sources · 35%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Art. 8 human-driver requirement unresolved in Dutch national law</div></div>
+      <div class="ccd r3" data-code="R3"><div class="ccd-l">R3</div><div class="ccd-n">Liability Framework</div><div class="ccd-c">6/20 sources · 30%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Manufacturer vs. operator ambiguity; no L4-specific Dutch statutory rule</div></div>
+      <div class="ccd r4" data-code="R4"><div class="ccd-l">R4</div><div class="ccd-n">Insurance Gap</div><div class="ccd-c">4/20 sources · 20%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Circular: no deployment → no data → no insurance → no deployment</div></div>
+      <div class="ccd tt" data-code="T"><div class="ccd-l">T</div><div class="ccd-n">Technical Barriers</div><div class="ccd-c">6/20 sources · 30%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">NOT the primary constraint — technology confirmed ready in port zones</div></div>
+      <div class="ccd ss" data-code="S"><div class="ccd-l">S</div><div class="ccd-n">Standardisation</div><div class="ccd-c">5/20 sources · 25%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Interoperability gaps compound the regulatory bottleneck</div></div>
+      <div class="ccd ee" data-code="E"><div class="ccd-l">E</div><div class="ccd-n">Economic Barriers</div><div class="ccd-c">2/20 sources · 10%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">Downstream of regulatory uncertainty — not independently blocking</div></div>
+      <div class="ccd cc2" data-code="C"><div class="ccd-l">C</div><div class="ccd-n">Cultural Barriers</div><div class="ccd-c">0/20 sources · 0%</div><div class="ccd-bar"><div class="ccd-fill"></div></div><div class="ccd-desc">No source coded C in port/industrial zone freight context</div></div>
+    </div>
+    <div class="src-grid reveal">
+      <div class="src"><div class="src-n">01</div><div class="src-nm">Vellinga, N.E. (2019)</div><div class="src-tags"><span class="stag cr2">R2</span><span class="stag cr3">R3</span></div></div>
+      <div class="src"><div class="src-n">02</div><div class="src-nm">Tjong Tjin Tai, E. (2024)</div><div class="src-tags"><span class="stag cr3">R3</span><span class="stag cr4">R4</span></div></div>
+      <div class="src"><div class="src-n">03</div><div class="src-nm">RDW (2025)</div><div class="src-tags"><span class="stag cr1">R1</span></div></div>
+      <div class="src"><div class="src-n">04</div><div class="src-nm">Galassi et al. (2023)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag cr2">R2</span></div></div>
+      <div class="src"><div class="src-n">05</div><div class="src-nm">Milakis et al. (2017)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag ct">T</span></div></div>
+      <div class="src"><div class="src-n">06</div><div class="src-nm">WEF (2025)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag ct">T</span></div></div>
+      <div class="src"><div class="src-n">07</div><div class="src-nm">ALICE ETP Roadmap (2022)</div><div class="src-tags"><span class="stag cs">S</span></div></div>
+      <div class="src"><div class="src-n">08</div><div class="src-nm">Nikitas et al. (2020)</div><div class="src-tags"><span class="stag ct">T</span><span class="stag cs">S</span></div></div>
+      <div class="src"><div class="src-n">09 ⚑</div><div class="src-nm">Van Duin et al. (2023)</div><div class="src-tags"><span class="stag cr1">R1</span></div></div>
+      <div class="src"><div class="src-n">10</div><div class="src-nm">Tjong Tjin Tai, E. (2018)</div><div class="src-tags"><span class="stag cr3">R3</span></div></div>
+      <div class="src"><div class="src-n">11</div><div class="src-nm">German AV Act (2021)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag cr2">R2</span></div></div>
+      <div class="src"><div class="src-n">12</div><div class="src-nm">AFGBV Germany (2022)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag cr2">R2</span></div></div>
+      <div class="src"><div class="src-n">13</div><div class="src-nm">TSFS 2021:4 Sweden</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag cr2">R2</span></div></div>
+      <div class="src"><div class="src-n">14</div><div class="src-nm">Einride / RISE (2024)</div><div class="src-tags"><span class="stag ct">T</span></div></div>
+      <div class="src"><div class="src-n">15</div><div class="src-nm">TNO – Van Meijeren (2025)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag ct">T</span></div></div>
+      <div class="src"><div class="src-n">16</div><div class="src-nm">Ploos van Amstel (2025)</div><div class="src-tags"><span class="stag cs">S</span><span class="stag ce">E</span></div></div>
+      <div class="src"><div class="src-n">17</div><div class="src-nm">Sarraj et al. (2013)</div><div class="src-tags"><span class="stag cs">S</span></div></div>
+      <div class="src"><div class="src-n">18</div><div class="src-nm">Munich Re (n.d.)</div><div class="src-tags"><span class="stag cr4">R4</span></div></div>
+      <div class="src"><div class="src-n">19</div><div class="src-nm">WEF (2019)</div><div class="src-tags"><span class="stag cr2">R2</span></div></div>
+      <div class="src"><div class="src-n">20</div><div class="src-nm">EU GSR (2022)</div><div class="src-tags"><span class="stag cr1">R1</span><span class="stag ct">T</span></div></div>
+    </div>
+    <div class="da-note">⚑ Counter-evidence source — coded as-written, not excluded from analysis</div>
+  </div>
+</section>
+
+<!-- ABOUT THIS RESEARCH -->
+<section style="background:var(--navy);padding:5rem 0;border-top:3px solid var(--red);">
+  <div class="wrap">
+    <div class="reveal">
+      <div class="sec-eyebrow" style="color:rgba(196,64,32,0.8);">About This Research</div>
+      <h2 class="sec-title sec-title-dark">Research design & methodology</h2>
+      <p class="sec-lead sec-lead-dark">This research used three complementary methods, each building on the last, to answer the research question from multiple angles.</p>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.1);margin-top:2.5rem;" class="reveal">
+      <div style="background:rgba(255,255,255,0.04);padding:2rem;">
+        <div style="font-family:'Fraunces',serif;font-size:3rem;font-weight:900;color:rgba(255,255,255,0.06);line-height:1;margin-bottom:0.75rem;">M1</div>
+        <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:rgba(196,64,32,0.8);margin-bottom:0.5rem;">Document Analysis</div>
+        <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:0.5rem;">20 sources, 8 barrier codes</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,0.38);line-height:1.7;">Academic papers, policy documents, and industry reports coded against R1–R4, T, E, C, and S barrier categories. Purposive sampling. Counter-evidence included deliberately.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);padding:2rem;border-left:1px solid rgba(255,255,255,0.07);">
+        <div style="font-family:'Fraunces',serif;font-size:3rem;font-weight:900;color:rgba(255,255,255,0.06);line-height:1;margin-bottom:0.75rem;">M2</div>
+        <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:rgba(196,64,32,0.8);margin-bottom:0.5rem;">Comparative Case Analysis</div>
+        <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:0.5rem;">Netherlands vs Germany vs Sweden</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,0.38);line-height:1.7;">Countries selected for comparable AV technology and EU membership. Technology held constant isolates national regulatory differences as the explanatory variable for deployment outcomes.</div>
+      </div>
+      <div style="background:rgba(255,255,255,0.04);padding:2rem;border-left:1px solid rgba(255,255,255,0.07);">
+        <div style="font-family:'Fraunces',serif;font-size:3rem;font-weight:900;color:rgba(255,255,255,0.06);line-height:1;margin-bottom:0.75rem;">M3</div>
+        <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.13em;text-transform:uppercase;color:rgba(196,64,32,0.8);margin-bottom:0.5rem;">Regulatory Readiness Index</div>
+        <div style="font-size:14px;font-weight:600;color:rgba(255,255,255,0.85);margin-bottom:0.5rem;">0–2 scoring across 5 dimensions</div>
+        <div style="font-size:12.5px;color:rgba(255,255,255,0.38);line-height:1.7;">Converts qualitative findings from M1 and M2 into a structured, measurable output. Score is traceable back to specific source citations — not a subjective ranking.</div>
+      </div>
+    </div>
+    <div style="margin-top:2.5rem;padding:2rem;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);border-left:3px solid rgba(196,64,32,0.5);" class="reveal">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:2rem;">
+        <div>
+          <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:0.35rem;">Researcher</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);">Jason Wangsa — 231681</div>
+        </div>
+        <div>
+          <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:0.35rem;">Institution</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);">Breda University of Applied Sciences</div>
+        </div>
+        <div>
+          <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:0.35rem;">Programme</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);">Logistics Engineering — Physical Internet Specialisation</div>
+        </div>
+        <div>
+          <div style="font-family:'Fira Code',monospace;font-size:9px;letter-spacing:0.12em;text-transform:uppercase;color:rgba(255,255,255,0.22);margin-bottom:0.35rem;">Submitted</div>
+          <div style="font-size:13px;color:rgba(255,255,255,0.65);">March 2026 · Deep Dive Semester 3</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SIMULATION CTA -->
+<a href="PI_231681_Wangsa_Jason_Simulation.html" style="display:block;background:var(--navy);padding:3.5rem 2rem;text-align:center;text-decoration:none;position:relative;overflow:hidden;border-top:3px solid var(--teal);transition:background 0.2s;" onmouseover="this.style.background='var(--navy3)'" onmouseout="this.style.background='var(--navy)'">
+  <div style="position:absolute;inset:0;background-image:linear-gradient(rgba(255,255,255,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,0.03) 1px,transparent 1px);background-size:48px 48px;pointer-events:none;"></div>
+  <div style="position:absolute;inset:0;background:radial-gradient(ellipse 60% 100% at 50% 0%,rgba(26,92,106,0.15) 0%,transparent 70%);pointer-events:none;"></div>
+  <div style="position:relative;z-index:1;">
+    <div style="font-family:'Fira Code',monospace;font-size:10px;letter-spacing:0.15em;text-transform:uppercase;color:rgba(26,92,106,0.8);margin-bottom:0.6rem;">See the research in action</div>
+    <div style="font-family:'Fraunces',serif;font-size:2rem;font-weight:900;color:#fff;margin-bottom:0.4rem;">Port Simulation</div>
+    <div style="font-size:13px;color:rgba(255,255,255,0.35);margin-bottom:1.5rem;">Watch current vs PI Hub · Trigger incidents · Split view comparison · Live metrics</div>
+    <span style="display:inline-flex;align-items:center;gap:0.75rem;background:var(--teal);color:#fff;padding:0.875rem 2.25rem;font-size:13px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;">▶ Open Simulation →</span>
+  </div>
+</a>
+
+<!-- BACK -->
+<div class="back-strip">
+  <a href="PI_231681_Wangsa_Jason_Website.html" class="back-btn">← Back to Project Worksheet</a>
+  <a href="PI_231681_Wangsa_Jason_Simulation.html" style="display:inline-flex;align-items:center;gap:0.6rem;padding:0.65rem 1.5rem;background:var(--teal);color:#fff;font-size:11px;font-weight:700;text-decoration:none;letter-spacing:0.07em;text-transform:uppercase;transition:background 0.15s;" onmouseover="this.style.background='var(--teal2)'" onmouseout="this.style.background='var(--teal)'">▶ View Port Simulation</a>
+  <div style="font-family:'Fira Code',monospace;font-size:10px;color:rgba(255,255,255,0.18);">PI_231681_Wangsa_Jason · Research Findings · Page 2 of 2</div>
+</div>
+
+<footer class="foot">
+  <div class="foot-l">PI_231681_Wangsa_Jason · BUas 2026 · Physical Internet Specialisation</div>
+  <div class="foot-r"><a href="https://www.linkedin.com/in/jasonwangsa" target="_blank" style="color:rgba(255,255,255,0.35);text-decoration:none;transition:color 0.15s;" onmouseover="this.style.color='rgba(255,255,255,0.7)'" onmouseout="this.style.color='rgba(255,255,255,0.35)'">linkedin.com/in/jasonwangsa</a></div>
+</footer>
+
+<script>
+const observer = new IntersectionObserver((entries) => {
+  entries.forEach(e => { if(e.isIntersecting) e.target.classList.add('visible'); });
+}, { threshold: 0.08, rootMargin: '0px 0px -50px 0px' });
+document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+const ids = ['findings','comparative','index','docanalysis'];
+window.addEventListener('scroll', () => {
+  let cur = '';
+  ids.forEach(id => { const el = document.getElementById(id); if (el && window.scrollY >= el.offsetTop - 80) cur = id; });
+  document.querySelectorAll('.nav-links a.sm').forEach(a => {
+    a.style.color = a.getAttribute('href') === '#' + cur ? 'rgba(255,255,255,0.75)' : '';
+  });
+});
+</script>
+</body>
+</html>
